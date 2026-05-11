@@ -1,0 +1,15 @@
+# Device-specific configs (contain secrets / personal data)
+hav-pe-*.yaml
+*-pe-*.yaml
+secrets.yaml
+
+# ESPHome build artifacts
+.esphome/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store

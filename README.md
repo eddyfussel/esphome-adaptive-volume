@@ -1,0 +1,85 @@
+# esphome-dynamic-volume
+
+An ESPHome custom component for Home Assistant Voice PE devices that automatically adjusts TTS (text-to-speech) playback volume based on measured ambient noise.
+
+> **Disclaimer:** This project was vibe coded. Use at your own risk. I am not responsible for broken hardware, unexpected device behavior, or any other effects caused by using this component.
+
+## How it works
+
+The component registers an audio callback on the I2S microphone. While the device is idle (not playing TTS), it continuously measures the ambient noise level as a smoothed dBFS value. The moment the media player transitions to the `ANNOUNCING` state, the component calculates a target volume via linear interpolation between configurable quiet/loud thresholds and applies it before the TTS starts playing.
+
+```
+ambient dBFS  │  quiet_db (-50)  ────────────  loud_db (-25)
+TTS volume    │  min_vol (0.40)  ────────────  max_vol (0.85)
+```
+
+Requires an I2S microphone named `i2s_mics` and a media player named `external_media_player` — both provided by the official [HA Voice PE firmware](https://github.com/esphome/home-assistant-voice-pe).
+
+## Usage
+
+Add one line to the `packages:` section of your device YAML in the ESPHome add-on:
+
+```yaml
+packages:
+  Nabu Casa.Home Assistant Voice PE: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml@dev
+  dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume.yaml@main
+```
+
+See [example.yaml](example.yaml) for a complete device config template, or [example-local.yaml](example-local.yaml) for local development (loads the component from this repo instead of GitHub).
+
+## Home Assistant entities
+
+After flashing, these entities appear in Home Assistant:
+
+| Entity | Type | Description |
+|---|---|---|
+| Ambient Noise Level | Sensor | Current smoothed ambient level in dBFS (diagnostic) |
+| Dynamic TTS Volume | Switch | Enable / disable the feature |
+| Dynamic Volume Min | Number | Volume at quiet threshold (0.0–1.0) |
+| Dynamic Volume Max | Number | Volume at loud threshold (0.0–1.0) |
+| Quiet Threshold (dBFS) | Number | dBFS level that maps to min volume |
+| Loud Threshold (dBFS) | Number | dBFS level that maps to max volume |
+
+## Calibration
+
+Typical starting values (adjustable from HA without re-flashing):
+
+- **Quiet Threshold**: -50 dBFS (silent room → min volume)
+- **Loud Threshold**: -25 dBFS (noisy environment → max volume)
+- **Min Volume**: 0.40
+- **Max Volume**: 0.85
+
+Watch the `Ambient Noise Level` sensor in HA to find the right thresholds for your environment. Talk loudly near the device and note the peak values.
+
+## Local development
+
+```shell
+# Install ESPHome
+uv tool install esphome --with wheel,pip
+
+# Compile (uses local component sources directly)
+esphome compile <your-device>.yaml
+
+# Compile + flash over USB
+esphome run <your-device>.yaml
+```
+
+## Repository structure
+
+```
+components/
+└── dynamic_volume/
+    ├── __init__.py       # ESPHome schema + code generation
+    ├── dynamic_volume.h  # C++ component class
+    └── dynamic_volume.cpp
+dynamic-volume.yaml       # ESPHome package (include this in your device)
+example.yaml              # Example device config
+```
+
+## Thread safety
+
+The I2S audio callback runs in a FreeRTOS task at priority 23. The component uses:
+- `std::atomic<float> smoothed_dbfs_` — written by I2S task, read by main loop
+- `std::atomic<bool> enabled_` — written by main loop (switch), read by I2S task
+
+All other state is only touched from the main loop.
