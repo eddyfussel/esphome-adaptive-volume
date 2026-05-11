@@ -1,0 +1,117 @@
+# ESPHome package: Dynamic TTS Volume
+#
+# Measures ambient noise via the I2S microphone (idle periods only) and
+# adjusts the media player volume before each TTS response.
+#
+# Include in your device YAML:
+#   packages:
+#     dynamic_volume: !include dynamic-volume.yaml
+
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [dynamic_volume]
+
+# Core component — audio measurement and volume calculation
+dynamic_volume:
+  id: dynamic_vol
+  microphone: i2s_mics
+  media_player: external_media_player
+  smoothing_factor: 0.05   # EMA alpha: lower = slower response, higher = faster
+
+# Sensor: exposes current smoothed ambient level to Home Assistant
+sensor:
+  - platform: template
+    id: ambient_db_sensor
+    name: "Ambient Noise Level"
+    unit_of_measurement: "dBFS"
+    icon: "mdi:microphone"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    state_class: measurement
+    update_interval: 5s
+    lambda: return id(dynamic_vol).get_ambient_db();
+
+# Switch: enable / disable the feature from Home Assistant
+switch:
+  - platform: template
+    id: dyn_vol_switch
+    name: "Dynamic TTS Volume"
+    icon: "mdi:volume-high"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - lambda: id(dynamic_vol).set_enabled(true);
+    on_turn_off:
+      - lambda: id(dynamic_vol).set_enabled(false);
+
+# Number entities: tuning parameters adjustable from Home Assistant
+number:
+  # Volume applied at minimum ambient level (quiet room)
+  - platform: template
+    id: dyn_vol_min
+    name: "Dynamic Volume Min"
+    icon: "mdi:volume-low"
+    entity_category: config
+    min_value: 0.0
+    max_value: 1.0
+    step: 0.05
+    initial_value: 0.4
+    restore_value: true
+    optimistic: true
+
+  # Volume applied at maximum ambient level (loud environment)
+  - platform: template
+    id: dyn_vol_max
+    name: "Dynamic Volume Max"
+    icon: "mdi:volume-high"
+    entity_category: config
+    min_value: 0.0
+    max_value: 1.0
+    step: 0.05
+    initial_value: 0.85
+    restore_value: true
+    optimistic: true
+
+  # dBFS threshold that maps to min volume (a quiet room is typically around -50 dBFS)
+  - platform: template
+    id: dyn_vol_quiet_db
+    name: "Quiet Threshold (dBFS)"
+    icon: "mdi:volume-off"
+    entity_category: config
+    min_value: -80.0
+    max_value: 0.0
+    step: 1.0
+    initial_value: -50.0
+    restore_value: true
+    optimistic: true
+
+  # dBFS threshold that maps to max volume (a loud environment is typically around -25 dBFS)
+  - platform: template
+    id: dyn_vol_loud_db
+    name: "Loud Threshold (dBFS)"
+    icon: "mdi:volume-vibrate"
+    entity_category: config
+    min_value: -80.0
+    max_value: 0.0
+    step: 1.0
+    initial_value: -25.0
+    restore_value: true
+    optimistic: true
+
+esphome:
+  on_boot:
+    # priority -100 runs after all components have setup(), so entity states are available
+    priority: -100
+    then:
+      - lambda: |-
+          // Sync enabled state from the restored switch state.
+          id(dynamic_vol).set_enabled(id(dyn_vol_switch).state);
+
+          // Wire number entity pointers so changes in HA take effect on the next TTS.
+          id(dynamic_vol).set_min_volume_number(id(dyn_vol_min));
+          id(dynamic_vol).set_max_volume_number(id(dyn_vol_max));
+          id(dynamic_vol).set_quiet_db_number(id(dyn_vol_quiet_db));
+          id(dynamic_vol).set_loud_db_number(id(dyn_vol_loud_db));
