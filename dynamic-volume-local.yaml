@@ -1,17 +1,14 @@
-# ESPHome package: Dynamic TTS Volume
+# ESPHome package: Dynamic TTS Volume (local development variant)
 #
-# Measures ambient noise via the I2S microphone (idle periods only) and
-# adjusts the media player volume before each TTS response.
-#
-# Include in your device YAML:
-#   packages:
-#     dynamic_volume: !include dynamic-volume.yaml
+# Identical to dynamic-volume.yaml but loads the component from the local
+# components/ directory instead of fetching it from GitHub.
+# Use this only during local development — never reference this file from
+# a device YAML that lives inside the ESPHome add-on.
 
 external_components:
   - source:
-      type: git
-      url: https://github.com/eddyfussel/voice-pe-dynamic-volume
-      ref: main
+      type: local
+      path: components
     components: [dynamic_volume]
 
 # Core component — audio measurement and volume calculation
@@ -50,7 +47,6 @@ switch:
 
 # Number entities: tuning parameters adjustable from Home Assistant
 number:
-  # Volume applied at minimum ambient level (quiet room)
   - platform: template
     id: dyn_vol_min
     name: "Dynamic Volume Min"
@@ -63,7 +59,6 @@ number:
     restore_value: true
     optimistic: true
 
-  # Volume applied at maximum ambient level (loud environment)
   - platform: template
     id: dyn_vol_max
     name: "Dynamic Volume Max"
@@ -76,7 +71,6 @@ number:
     restore_value: true
     optimistic: true
 
-  # dBFS threshold that maps to min volume (a quiet room is typically around -50 dBFS)
   - platform: template
     id: dyn_vol_quiet_db
     name: "Quiet Threshold (dBFS)"
@@ -89,7 +83,6 @@ number:
     restore_value: true
     optimistic: true
 
-  # dBFS threshold that maps to max volume (a loud environment is typically around -25 dBFS)
   - platform: template
     id: dyn_vol_loud_db
     name: "Loud Threshold (dBFS)"
@@ -104,14 +97,10 @@ number:
 
 esphome:
   on_boot:
-    # priority -100 runs after all components have setup(), so entity states are available
     priority: -100
     then:
       - lambda: |-
-          // Sync enabled state from the restored switch state.
           id(dynamic_vol).set_enabled(id(dyn_vol_switch).state);
-
-          // Wire number entity pointers so changes in HA take effect on the next TTS.
           id(dynamic_vol).set_min_volume_number(id(dyn_vol_min));
           id(dynamic_vol).set_max_volume_number(id(dyn_vol_max));
           id(dynamic_vol).set_quiet_db_number(id(dyn_vol_quiet_db));
