@@ -16,7 +16,7 @@ packages:
   Nabu Casa.Home Assistant Voice PE: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml@dev
 
   # Dynamic TTS Volume – loaded from local sources in this repo
-  dynamic_volume: !include dynamic-volume.yaml
+  dynamic_volume: !include dynamic-volume-local.yaml
 
 esphome:
   name: ${name}
