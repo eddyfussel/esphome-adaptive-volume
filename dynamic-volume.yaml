@@ -11,7 +11,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/eddyfussel/voice-pe-dynamic-volume
-      ref: main
+      ref: esphome-2026.04
     components: [dynamic_volume]
 
 # Core component — audio measurement and volume calculation

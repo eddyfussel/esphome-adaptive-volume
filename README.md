@@ -4,6 +4,33 @@ An ESPHome custom component for Home Assistant Voice PE devices that automatical
 
 > **Disclaimer:** This project was vibe coded. Use at your own risk. I am not responsible for broken hardware, unexpected device behavior, or any other effects caused by using this component.
 
+## Versioning & Compatibility
+
+Pin the package to a specific ref so you always get a version that matches your ESPHome installation:
+
+| Package ref | ESPHome version | HA Voice PE ref |
+|---|---|---|
+| `@esphome-2026.04` | 2026.4.x | pin to a 2026.4-compatible tag (see note below) |
+| `@main` | latest (currently 2026.5+) | default branch |
+
+**Note:** The official HA Voice PE firmware (`github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml`) also enforces a minimum ESPHome version. If you downgraded ESPHome, you must pin that package to a compatible release as well — check the [HA Voice PE releases](https://github.com/esphome/home-assistant-voice-pe/releases) for tags that match your ESPHome version.
+
+### For ESPHome 2026.4.x — use this branch
+
+```yaml
+packages:
+  Nabu Casa.Home Assistant Voice PE: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml@<compatible-tag>
+  dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume.yaml@esphome-2026.04
+```
+
+### For ESPHome 2026.5+ — use main
+
+```yaml
+packages:
+  Nabu Casa.Home Assistant Voice PE: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml
+  dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume.yaml@main
+```
+
 ## How it works
 
 The component registers an audio callback on the I2S microphone. While the device is idle (not playing TTS), it continuously measures the ambient noise level as a smoothed dBFS value. The moment the media player transitions to the `ANNOUNCING` state, the component calculates a target volume via linear interpolation between configurable quiet/loud thresholds and applies it before the TTS starts playing.
@@ -14,18 +41,6 @@ TTS volume    │  min_vol (0.40)  ────────────  max_vol
 ```
 
 Requires an I2S microphone named `i2s_mics` and a media player named `external_media_player` — both provided by the official [HA Voice PE firmware](https://github.com/esphome/home-assistant-voice-pe).
-
-## Usage
-
-Add one line to the `packages:` section of your device YAML in the ESPHome add-on:
-
-```yaml
-packages:
-  Nabu Casa.Home Assistant Voice PE: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml@dev
-  dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume.yaml@main
-```
-
-See [example.yaml](example.yaml) for a complete device config template, or [example-local.yaml](example-local.yaml) for local development (loads the component from this repo instead of GitHub).
 
 ## Home Assistant entities
 
