@@ -1,0 +1,204 @@
+# Compile / validation test — FutureProofHomes Satellite1
+#
+# This is a TEMPLATE. Taskfile generates the actual YAML (dynvol-compile-test.yaml)
+# by substituting __DV_COMPONENTS__ and __SAT1_COMPONENTS__ with local paths.
+#
+# Run via Taskfile:
+#   task check:satellite1     # fast YAML validation
+#   task compile:satellite1   # full C++ compile
+
+substitutions:
+  company_name: FutureProofHomes
+  project_name: Satellite1
+  esp32_fw_version: dev
+
+packages:
+  va_connected_wait_for_ble_and_flasher:
+    voice_assistant:
+      on_client_connected:
+        - wait_until:
+            not: ble.enabled
+        - wait_until:
+            not: memory_flasher.in_progress
+        - delay: 2s
+    wifi:
+      on_disconnect:
+        - ble.enable:
+      on_connect:
+        - delay: 5s
+        - ble.disable:
+    satellite1:
+      on_xmos_no_response:
+        then:
+          - if:
+              condition:
+                - lambda: return id(init_in_progress);
+                - lambda: return id(xflash).has_image_embedded();
+              then:
+                - memory_flasher.write_embedded_image:
+      on_xmos_connected:
+        then:
+          - delay: 1s
+          - script.execute: control_leds
+          - if:
+              condition:
+                - lambda: return id(init_in_progress);
+                - lambda: return id(xflash).has_image_embedded();
+                - lambda: return !id(xflash).match_embedded( id(satellite1_id).xmos_fw_version );
+              then:
+                - memory_flasher.write_embedded_image:
+
+  home-assistant-voice: !include satellite1.base.yaml
+
+esphome:
+  project:
+    name: ${company_name}.${project_name}
+    version: ${esp32_fw_version}
+  on_boot:
+    priority: -100
+    then:
+      - lambda: |-
+          id(dynamic_vol).set_enabled(id(dyn_vol_switch).state);
+          id(dynamic_vol).set_min_volume_number(id(dyn_vol_min));
+          id(dynamic_vol).set_max_volume_number(id(dyn_vol_max));
+          id(dynamic_vol).set_quiet_db_number(id(dyn_vol_quiet_db));
+          id(dynamic_vol).set_loud_db_number(id(dyn_vol_loud_db));
+
+esp32_improv:
+  authorizer: btn_action
+  on_start:
+    - lambda: id(improv_ble_in_progress) = true;
+    - script.execute: control_leds
+  on_provisioned:
+    - lambda: id(improv_ble_in_progress) = false;
+    - script.execute: control_leds
+  on_stop:
+    - lambda: id(improv_ble_in_progress) = false;
+    - script.execute: control_leds
+
+ota:
+  - platform: http_request
+    id: ota_http_request
+
+update:
+  - platform: http_request
+    name: None
+    id: update_http_request
+    source: https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/manifest.json
+
+logger:
+  deassert_rts_dtr: true
+  hardware_uart: USB_SERIAL_JTAG
+  level: debug
+  logs:
+    ltr_als_ps: WARN
+
+# ── External components ───────────────────────────────────────────────────────
+external_components:
+  - source:
+      type: local
+      path: __SAT1_COMPONENTS__
+    components: [fusb302b, i2s_audio, memory_flasher, pcm5122, satellite1, satellite1_radar, tas2780]
+  - source:
+      type: git
+      url: https://github.com/esphome/esphome
+      ref: ff8ce89556748509d7ee8724e12d9d43d3c8c1e8
+    refresh: 300s
+    components: [http_request]
+  - source:
+      type: local
+      path: __DV_COMPONENTS__
+    components: [dynamic_volume]
+
+# ── dynamic_volume ────────────────────────────────────────────────────────────
+dynamic_volume:
+  id: dynamic_vol
+  microphone: sat1_mics
+  media_player: external_media_player
+  smoothing_factor: 0.05
+
+sensor:
+  - platform: template
+    id: ambient_db_sensor
+    name: "Ambient Noise Level"
+    unit_of_measurement: "dBFS"
+    icon: "mdi:microphone"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    state_class: measurement
+    update_interval: 5s
+    lambda: return id(dynamic_vol).get_ambient_db();
+
+switch:
+  - platform: template
+    id: beta_firmware
+    name: Beta firmware
+    icon: "mdi:test-tube"
+    entity_category: diagnostic
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - logger.log: "OTA updates set to use Beta firmware"
+      - lambda: id(update_http_request).set_source_url("https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/manifest-beta.json");
+      - component.update: update_http_request
+    on_turn_off:
+      - logger.log: "OTA updates set to use Production firmware"
+      - lambda: id(update_http_request).set_source_url("https://raw.githubusercontent.com/FutureProofHomes/Documentation/refs/heads/main/manifest.json");
+      - component.update: update_http_request
+  - platform: template
+    id: dyn_vol_switch
+    name: "Dynamic TTS Volume"
+    icon: "mdi:volume-high"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - lambda: id(dynamic_vol).set_enabled(true);
+    on_turn_off:
+      - lambda: id(dynamic_vol).set_enabled(false);
+
+number:
+  - platform: template
+    id: dyn_vol_min
+    name: "Dynamic Volume Min"
+    icon: "mdi:volume-low"
+    entity_category: config
+    min_value: 0.0
+    max_value: 1.0
+    step: 0.05
+    initial_value: 0.4
+    restore_value: true
+    optimistic: true
+  - platform: template
+    id: dyn_vol_max
+    name: "Dynamic Volume Max"
+    icon: "mdi:volume-high"
+    entity_category: config
+    min_value: 0.0
+    max_value: 1.0
+    step: 0.05
+    initial_value: 0.85
+    restore_value: true
+    optimistic: true
+  - platform: template
+    id: dyn_vol_quiet_db
+    name: "Quiet Threshold (dBFS)"
+    icon: "mdi:volume-off"
+    entity_category: config
+    min_value: -80.0
+    max_value: 0.0
+    step: 1.0
+    initial_value: -50.0
+    restore_value: true
+    optimistic: true
+  - platform: template
+    id: dyn_vol_loud_db
+    name: "Loud Threshold (dBFS)"
+    icon: "mdi:volume-vibrate"
+    entity_category: config
+    min_value: -80.0
+    max_value: 0.0
+    step: 1.0
+    initial_value: -25.0
+    restore_value: true
+    optimistic: true
