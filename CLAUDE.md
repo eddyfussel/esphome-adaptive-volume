@@ -1,4 +1,4 @@
-# CLAUDE.md — esphome-dynamic-volume
+# CLAUDE.md — esphome-adaptive-volume
 
 Context and guidelines for Claude Code when working in this repository.
 
@@ -8,7 +8,7 @@ A single ESPHome custom component (`dynamic_volume`) packaged as a reusable ESPH
 
 ```yaml
 packages:
-  dynamic_volume: github://eddyfussel/esphome-dynamic-volume/dynamic-volume.yaml@main
+  dynamic_volume: github://eddyfussel/esphome-adaptive-volume/dynamic-volume.yaml@main
 ```
 
 The component measures ambient noise via the I2S mic and adjusts TTS playback volume before each announcement.

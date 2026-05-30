@@ -17,7 +17,7 @@ packages:
   Nabu Casa.Home Assistant Voice PE: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml@dev
 
   # Dynamic TTS Volume – adjusts speaker volume based on ambient noise
-  dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume.yaml@main
+  dynamic_volume: github://eddyfussel/esphome-adaptive-volume/dynamic-volume.yaml@main
 
 esphome:
   name: ${name}

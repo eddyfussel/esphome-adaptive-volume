@@ -5,11 +5,11 @@
 #
 # Include in your device YAML:
 #   packages:
-#     dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume.yaml@main
+#     dynamic_volume: github://eddyfussel/esphome-adaptive-volume/dynamic-volume.yaml@main
 #
 # For Satellite1 (sat1_mics instead of i2s_mics), either:
 #   a) Use the dedicated package:
-#        dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume-satellite1.yaml@main
+#        dynamic_volume: github://eddyfussel/esphome-adaptive-volume/dynamic-volume-satellite1.yaml@main
 #   b) Override the substitution in your device YAML:
 #        substitutions:
 #          dynamic_volume_mic_id: sat1_mics
@@ -22,7 +22,7 @@ substitutions:
 external_components:
   - source:
       type: git
-      url: https://github.com/eddyfussel/voice-pe-dynamic-volume
+      url: https://github.com/eddyfussel/esphome-adaptive-volume
       ref: main
     components: [dynamic_volume]
 
