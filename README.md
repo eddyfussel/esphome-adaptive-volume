@@ -8,12 +8,12 @@ An ESPHome custom component for Home Assistant Voice PE devices and the FuturePr
 
 Pin the package to a specific ref that matches your ESPHome installation:
 
-| Package ref | ESPHome version | Status |
-|---|---|---|
-| `@esphome-2026.04` | 2026.4.x | maintained |
-| `@main` | 2026.5+ | latest |
+| Package ref | ESPHome version | HA Voice PE ref | Status |
+|---|---|---|---|
+| `@esphome-2026.04` | 2026.4.x | `26.4.0` | maintained |
+| `@main` | 2026.5+ | `26.5.0` / `dev` | latest |
 
-**Note:** The official HA Voice PE firmware (`github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml`) also enforces a minimum ESPHome version. If you downgraded ESPHome, pin that package to a compatible release too — check the [HA Voice PE releases](https://github.com/esphome/home-assistant-voice-pe/releases) for a tag that matches your ESPHome version.
+**Note:** The official HA Voice PE firmware also enforces a minimum ESPHome version. Pin both refs together — mismatched versions cause the *"Current ESPHome Version is too old"* error.
 
 ## Supported devices
 

@@ -14,13 +14,24 @@ substitutions:
   friendly_name: "DynVol Test HA Voice PE"
 
 packages:
-  # Official HA Voice PE firmware (fetched from GitHub)
-  Nabu Casa.Home Assistant Voice PE: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml@dev
+  # Official HA Voice PE firmware — pin to a version matching your ESPHome install:
+  #   26.4.0 → ESPHome 2026.4.x   (current, matches test environment)
+  #   26.5.0 / dev → ESPHome 2026.5+
+  Nabu Casa.Home Assistant Voice PE: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml@26.4.0
 
 esphome:
   name: ${name}
   name_add_mac_suffix: false
   friendly_name: ${friendly_name}
+  on_boot:
+    priority: -100
+    then:
+      - lambda: |-
+          id(dynamic_vol).set_enabled(id(dyn_vol_switch).state);
+          id(dynamic_vol).set_min_volume_number(id(dyn_vol_min));
+          id(dynamic_vol).set_max_volume_number(id(dyn_vol_max));
+          id(dynamic_vol).set_quiet_db_number(id(dyn_vol_quiet_db));
+          id(dynamic_vol).set_loud_db_number(id(dyn_vol_loud_db));
 
 api:
   encryption:
@@ -118,13 +129,3 @@ number:
     restore_value: true
     optimistic: true
 
-esphome:
-  on_boot:
-    priority: -100
-    then:
-      - lambda: |-
-          id(dynamic_vol).set_enabled(id(dyn_vol_switch).state);
-          id(dynamic_vol).set_min_volume_number(id(dyn_vol_min));
-          id(dynamic_vol).set_max_volume_number(id(dyn_vol_max));
-          id(dynamic_vol).set_quiet_db_number(id(dyn_vol_quiet_db));
-          id(dynamic_vol).set_loud_db_number(id(dyn_vol_loud_db));
