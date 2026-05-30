@@ -5,7 +5,19 @@
 #
 # Include in your device YAML:
 #   packages:
-#     dynamic_volume: !include dynamic-volume.yaml
+#     dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume.yaml@main
+#
+# For Satellite1 (sat1_mics instead of i2s_mics), either:
+#   a) Use the dedicated package:
+#        dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume-satellite1.yaml@main
+#   b) Override the substitution in your device YAML:
+#        substitutions:
+#          dynamic_volume_mic_id: sat1_mics
+
+# Substitutions — override in your device YAML to adapt to other hardware
+substitutions:
+  dynamic_volume_mic_id: i2s_mics              # HA Voice PE default; use sat1_mics for Satellite1
+  dynamic_volume_player_id: external_media_player
 
 external_components:
   - source:
@@ -17,8 +29,8 @@ external_components:
 # Core component — audio measurement and volume calculation
 dynamic_volume:
   id: dynamic_vol
-  microphone: i2s_mics
-  media_player: external_media_player
+  microphone: ${dynamic_volume_mic_id}
+  media_player: ${dynamic_volume_player_id}
   smoothing_factor: 0.05   # EMA alpha: lower = slower response, higher = faster
 
 # Sensor: exposes current smoothed ambient level to Home Assistant

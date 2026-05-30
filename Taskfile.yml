@@ -1,0 +1,121 @@
+# https://taskfile.dev
+version: '3'
+
+vars:
+  # Satellite1 firmware release to use for compile tests
+  SAT1_VERSION: v0.2.0
+  # Local cache directory for the Satellite1 repo clone (gitignored)
+  SAT1_DIR: .sat1-esphome
+
+tasks:
+
+  default:
+    silent: true
+    cmds:
+      - task --list
+
+  # ── Validation (fast, no C++ compiler needed) ─────────────────────────────
+
+  check:ha-voice-pe:
+    desc: "Validate YAML for HA Voice PE (fast)"
+    cmds:
+      - task: _ensure-secrets-tests
+      - esphome config tests/compile-ha-voice-pe.yaml
+
+  check:satellite1:
+    desc: "Validate YAML for Satellite1 {{.SAT1_VERSION}} (fast)"
+    cmds:
+      - task: _ensure-sat1-repo
+      - task: _gen-sat1-test-yaml
+      - cd {{.SAT1_DIR}}/config && esphome config dynvol-compile-test.yaml
+
+  check:
+    desc: "Validate YAML for all targets"
+    cmds:
+      - task: check:ha-voice-pe
+      - task: check:satellite1
+
+  # ── Full compile (slow, downloads toolchain + firmware) ───────────────────
+
+  compile:ha-voice-pe:
+    desc: "Full compile for HA Voice PE (slow — downloads toolchain)"
+    cmds:
+      - task: _ensure-secrets-tests
+      - esphome compile tests/compile-ha-voice-pe.yaml
+
+  compile:satellite1:
+    desc: "Full compile for Satellite1 {{.SAT1_VERSION}} (slow)"
+    cmds:
+      - task: _ensure-sat1-repo
+      - task: _gen-sat1-test-yaml
+      - cd {{.SAT1_DIR}}/config && esphome compile dynvol-compile-test.yaml
+
+  compile:
+    desc: "Full compile for all targets"
+    cmds:
+      - task: compile:ha-voice-pe
+      - task: compile:satellite1
+
+  # ── Housekeeping ──────────────────────────────────────────────────────────
+
+  clean:
+    desc: "Remove ESPHome build artifacts"
+    cmds:
+      - rm -rf .esphome tests/.esphome "{{.SAT1_DIR}}/config/.esphome"
+      - echo "Build artifacts removed."
+
+  clean:all:
+    desc: "Remove build artifacts AND the cached Satellite1 repo clone"
+    cmds:
+      - task: clean
+      - rm -rf "{{.SAT1_DIR}}"
+      - echo "Satellite1 cache removed."
+
+  # ── Internal helpers ──────────────────────────────────────────────────────
+
+  _ensure-secrets-tests:
+    internal: true
+    silent: true
+    status:
+      - test -f tests/secrets.yaml
+    cmds:
+      - |
+        cat > tests/secrets.yaml <<'EOF'
+        wifi_ssid: "test_network"
+        wifi_password: "test_password_12345"
+        api_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        EOF
+      - echo "Created tests/secrets.yaml with dummy values (gitignored)."
+
+  _ensure-sat1-repo:
+    internal: true
+    silent: true
+    status:
+      - test -d "{{.SAT1_DIR}}"
+    cmds:
+      - echo "Cloning FutureProofHomes/Satellite1-ESPHome @ {{.SAT1_VERSION}} ..."
+      - |
+        git clone --depth 1 --branch {{.SAT1_VERSION}} \
+          https://github.com/FutureProofHomes/Satellite1-ESPHome.git \
+          "{{.SAT1_DIR}}"
+      - |
+        cat > "{{.SAT1_DIR}}/config/secrets.yaml" <<'EOF'
+        wifi_ssid: "test_network"
+        wifi_password: "test_password_12345"
+        wifi_ap_password: "test_ap_pass"
+        EOF
+
+  _gen-sat1-test-yaml:
+    internal: true
+    silent: true
+    vars:
+      REPO_ROOT:
+        sh: pwd
+      SAT1_COMP:
+        sh: realpath "{{.SAT1_DIR}}/esphome/components"
+    cmds:
+      - |
+        sed \
+          's|__DV_COMPONENTS__|{{.REPO_ROOT}}/components|g; s|__SAT1_COMPONENTS__|{{.SAT1_COMP}}|g' \
+          tests/compile-satellite1.yaml.tmpl \
+          > "{{.SAT1_DIR}}/config/dynvol-compile-test.yaml"

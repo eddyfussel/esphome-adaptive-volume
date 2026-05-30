@@ -5,6 +5,13 @@ secrets.yaml
 
 # ESPHome build artifacts
 .esphome/
+tests/.esphome/
+
+# Satellite1 repo clone (cached by Taskfile for compile tests)
+.sat1-esphome/
+
+# Generated test YAML (produced by Taskfile from the .tmpl)
+tests/dynvol-compile-test.yaml
 
 # Python
 __pycache__/
