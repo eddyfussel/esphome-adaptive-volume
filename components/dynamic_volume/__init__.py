@@ -3,7 +3,7 @@ import esphome.config_validation as cv
 from esphome.components import microphone, media_player
 from esphome.const import CONF_ID
 
-CODEOWNERS = ["@eknese"]
+CODEOWNERS = ["@eddyfussel"]
 DEPENDENCIES = ["microphone", "media_player"]
 
 CONF_MICROPHONE = "microphone"

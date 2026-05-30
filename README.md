@@ -1,4 +1,4 @@
-# esphome-dynamic-volume
+# esphome-adaptive-volume
 
 An ESPHome custom component for Home Assistant Voice PE devices and the FutureProofHomes Satellite1 Speaker that automatically adjusts TTS (text-to-speech) playback volume based on measured ambient noise.
 
@@ -29,14 +29,14 @@ Pin the package to a specific ref that matches your ESPHome installation:
 ```yaml
 packages:
   Nabu Casa.Home Assistant Voice PE: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml
-  dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume.yaml@main
+  dynamic_volume: github://eddyfussel/esphome-adaptive-volume/dynamic-volume.yaml@main
 ```
 
 For ESPHome 2026.4.x:
 ```yaml
 packages:
   Nabu Casa.Home Assistant Voice PE: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml@<compatible-tag>
-  dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume.yaml@esphome-2026.04
+  dynamic_volume: github://eddyfussel/esphome-adaptive-volume/dynamic-volume.yaml@esphome-2026.04
 ```
 
 ### FutureProofHomes Satellite1 Speaker
@@ -45,7 +45,7 @@ Use the dedicated package (tested against Satellite1 firmware v0.2.0):
 
 ```yaml
 packages:
-  dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume-satellite1.yaml@main
+  dynamic_volume: github://eddyfussel/esphome-adaptive-volume/dynamic-volume-satellite1.yaml@main
 ```
 
 Or override the microphone substitution in your device YAML:
@@ -55,7 +55,7 @@ substitutions:
   dynamic_volume_mic_id: sat1_mics
 
 packages:
-  dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume.yaml@main
+  dynamic_volume: github://eddyfussel/esphome-adaptive-volume/dynamic-volume.yaml@main
 ```
 
 See [example.yaml](example.yaml) and [example-local.yaml](example-local.yaml) for complete device config templates.
