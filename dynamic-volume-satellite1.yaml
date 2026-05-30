@@ -5,12 +5,12 @@
 #
 # Include in your device YAML:
 #   packages:
-#     dynamic_volume: github://eddyfussel/voice-pe-dynamic-volume/dynamic-volume-satellite1.yaml@esphome-2026.04
+#     dynamic_volume: github://eddyfussel/esphome-adaptive-volume/dynamic-volume-satellite1.yaml@esphome-2026.04
 
 external_components:
   - source:
       type: git
-      url: https://github.com/eddyfussel/voice-pe-dynamic-volume
+      url: https://github.com/eddyfussel/esphome-adaptive-volume
       ref: esphome-2026.04
     components: [dynamic_volume]
 
