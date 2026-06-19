@@ -8,12 +8,14 @@ An ESPHome custom component for Home Assistant Voice PE devices and the FuturePr
 
 Pin the package to a specific ref that matches your ESPHome installation:
 
-| Package ref | ESPHome version | HA Voice PE ref | Status |
-|---|---|---|---|
-| `@esphome-2026.04` | 2026.4.x | `26.4.0` | maintained |
-| `@main` | 2026.5+ | `26.5.0` / `dev` | latest |
+| Package ref | ESPHome version | HA Voice PE ref | Satellite1 ref | Status |
+|---|---|---|---|---|
+| `@esphome-2026.04` | 2026.4.x | `26.4.0` | `v0.2.0` | maintained |
+| `@main` | 2026.5+ / 2026.6+ | `dev` | ⚠️ pending | latest |
 
 **Note:** The official HA Voice PE firmware also enforces a minimum ESPHome version. Pin both refs together — mismatched versions cause the *"Current ESPHome Version is too old"* error.
+
+> **Satellite1 + ESPHome 2026.5+:** Satellite1 firmware `v0.2.0` pins internal ESPHome components that are incompatible with ESPHome 2026.5+. Use `@esphome-2026.04` until FutureProofHomes releases a new firmware version.
 
 ## Supported devices
 

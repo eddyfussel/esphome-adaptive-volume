@@ -15,9 +15,9 @@ substitutions:
 
 packages:
   # Official HA Voice PE firmware — pin to a version matching your ESPHome install:
-  #   26.4.0 → ESPHome 2026.4.x   (current, matches test environment)
-  #   26.5.0 / dev → ESPHome 2026.5+
-  Nabu Casa.Home Assistant Voice PE: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml@26.4.0
+  #   26.4.0 → ESPHome 2026.4.x
+  #   dev    → ESPHome 2026.5+ / 2026.6+ (current, matches test environment)
+  Nabu Casa.Home Assistant Voice PE: github://esphome/home-assistant-voice-pe/home-assistant-voice.yaml@dev
 
 esphome:
   name: ${name}
