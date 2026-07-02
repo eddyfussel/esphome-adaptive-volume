@@ -87,33 +87,44 @@ void DynamicVolumeComponent::handle_audio_(const std::vector<uint8_t> &data) {
   this->smoothed_dbfs_.store(updated, std::memory_order_relaxed);
 }
 
-float DynamicVolumeComponent::get_target_volume_() const {
-  float db       = this->smoothed_dbfs_.load(std::memory_order_relaxed);
-  float quiet_db = (this->quiet_db_number_   != nullptr) ? this->quiet_db_number_->state   : -50.0f;
-  float loud_db  = (this->loud_db_number_    != nullptr) ? this->loud_db_number_->state    : -25.0f;
+VolumeCalc DynamicVolumeComponent::compute_volume_() const {
+  VolumeCalc calc{};
+  calc.db       = this->smoothed_dbfs_.load(std::memory_order_relaxed);
+  calc.quiet_db = (this->quiet_db_number_   != nullptr) ? this->quiet_db_number_->state   : -55.0f;
+  calc.loud_db  = (this->loud_db_number_    != nullptr) ? this->loud_db_number_->state    : -38.0f;
   float min_vol  = (this->min_volume_number_ != nullptr) ? this->min_volume_number_->state : 0.4f;
   float max_vol  = (this->max_volume_number_ != nullptr) ? this->max_volume_number_->state : 0.85f;
+  float exponent = (this->curve_exponent_number_ != nullptr) ? this->curve_exponent_number_->state : 1.0f;
+  if (exponent <= 0.0f)
+    exponent = 1.0f;
 
-  if (loud_db <= quiet_db)
-    return min_vol;
+  if (calc.loud_db <= calc.quiet_db) {
+    calc.ratio  = 0.0f;
+    calc.target = min_vol;
+    return calc;
+  }
 
-  float ratio = (db - quiet_db) / (loud_db - quiet_db);
+  float ratio = (calc.db - calc.quiet_db) / (calc.loud_db - calc.quiet_db);
   if (ratio < 0.0f) ratio = 0.0f;
   if (ratio > 1.0f) ratio = 1.0f;
+  if (exponent != 1.0f)
+    ratio = std::pow(ratio, exponent);
 
-  return min_vol + ratio * (max_vol - min_vol);
+  calc.ratio  = ratio;
+  calc.target = min_vol + ratio * (max_vol - min_vol);
+  return calc;
 }
 
 void DynamicVolumeComponent::apply_volume_() {
   if (!this->enabled_.load(std::memory_order_relaxed))
     return;
 
-  float target = this->get_target_volume_();
-  float db     = this->smoothed_dbfs_.load(std::memory_order_relaxed);
+  VolumeCalc calc = this->compute_volume_();
 
-  ESP_LOGI(TAG, "TTS volume → %.2f  (ambient %.1f dBFS)", target, db);
+  ESP_LOGI(TAG, "TTS volume → %.2f  (ambient %.1f dBFS, quiet=%.0f loud=%.0f, ratio=%.2f)",
+           calc.target, calc.db, calc.quiet_db, calc.loud_db, calc.ratio);
 
-  this->media_player_->make_call().set_volume(target).perform();
+  this->media_player_->make_call().set_volume(calc.target).perform();
 }
 
 }  // namespace dynamic_volume

@@ -16,6 +16,16 @@
 namespace esphome {
 namespace dynamic_volume {
 
+// Snapshot of a single volume calculation, used both to set the media
+// player volume and to print the calibration breakdown in the log line.
+struct VolumeCalc {
+  float target;
+  float db;
+  float quiet_db;
+  float loud_db;
+  float ratio;
+};
+
 class DynamicVolumeComponent : public Component {
  public:
   void setup() override;
@@ -36,10 +46,11 @@ class DynamicVolumeComponent : public Component {
   void set_max_volume_number(number::Number *n) { this->max_volume_number_ = n; }
   void set_quiet_db_number(number::Number *n) { this->quiet_db_number_ = n; }
   void set_loud_db_number(number::Number *n) { this->loud_db_number_ = n; }
+  void set_curve_exponent_number(number::Number *n) { this->curve_exponent_number_ = n; }
 
  protected:
   void handle_audio_(const std::vector<uint8_t> &data);
-  float get_target_volume_() const;
+  VolumeCalc compute_volume_() const;
   void apply_volume_();
 
   microphone::Microphone *microphone_{nullptr};
@@ -59,6 +70,7 @@ class DynamicVolumeComponent : public Component {
   number::Number *max_volume_number_{nullptr};
   number::Number *quiet_db_number_{nullptr};
   number::Number *loud_db_number_{nullptr};
+  number::Number *curve_exponent_number_{nullptr};
 };
 
 }  // namespace dynamic_volume

@@ -63,6 +63,7 @@ esphome:
           id(dynamic_vol).set_max_volume_number(id(dyn_vol_max));
           id(dynamic_vol).set_quiet_db_number(id(dyn_vol_quiet_db));
           id(dynamic_vol).set_loud_db_number(id(dyn_vol_loud_db));
+          id(dynamic_vol).set_curve_exponent_number(id(dyn_vol_curve_exponent));
 
 esp32_improv:
   authorizer: btn_action
@@ -129,6 +130,17 @@ sensor:
     update_interval: 5s
     lambda: return id(dynamic_vol).get_ambient_db();
 
+  - platform: template
+    id: ambient_db_sensor_fast
+    name: "Ambient Noise Level (Fast)"
+    unit_of_measurement: "dBFS"
+    icon: "mdi:microphone"
+    accuracy_decimals: 1
+    entity_category: diagnostic
+    state_class: measurement
+    update_interval: 1s
+    lambda: return id(dynamic_vol).get_ambient_db();
+
 switch:
   - platform: template
     id: beta_firmware
@@ -188,7 +200,7 @@ number:
     min_value: -80.0
     max_value: 0.0
     step: 1.0
-    initial_value: -50.0
+    initial_value: -55.0
     restore_value: true
     optimistic: true
   - platform: template
@@ -199,6 +211,17 @@ number:
     min_value: -80.0
     max_value: 0.0
     step: 1.0
-    initial_value: -25.0
+    initial_value: -38.0
+    restore_value: true
+    optimistic: true
+  - platform: template
+    id: dyn_vol_curve_exponent
+    name: "Volume Curve Exponent"
+    icon: "mdi:chart-bell-curve"
+    entity_category: config
+    min_value: 0.3
+    max_value: 2.0
+    step: 0.1
+    initial_value: 1.0
     restore_value: true
     optimistic: true
