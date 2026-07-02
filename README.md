@@ -65,9 +65,13 @@ See [example.yaml](example.yaml) and [example-local.yaml](example-local.yaml) fo
 The component registers an audio callback on the I2S microphone. While the device is idle (not playing TTS), it continuously measures the ambient noise level as a smoothed dBFS value. The moment the media player transitions to the `ANNOUNCING` state, the component calculates a target volume via linear interpolation between configurable quiet/loud thresholds and applies it before the TTS starts playing.
 
 ```
-ambient dBFS  │  quiet_db (-50)  ────────────  loud_db (-25)
+ambient dBFS  │  quiet_db (-55)  ────────────  loud_db (-38)
 TTS volume    │  min_vol (0.40)  ────────────  max_vol (0.85)
 ```
+
+The interpolation between the two thresholds is linear by default but can be
+made more aggressive at moderate noise levels via the `curve_exponent`
+setting (`ratio ^ exponent`, exponent < 1.0 = steeper ramp-up).
 
 Requires a microphone component and a media player named `external_media_player` — both provided by the respective device firmware.
 
@@ -77,23 +81,30 @@ After flashing, these entities appear in Home Assistant:
 
 | Entity | Type | Description |
 |---|---|---|
-| Ambient Noise Level | Sensor | Current smoothed ambient level in dBFS (diagnostic) |
+| Ambient Noise Level | Sensor | Current smoothed ambient level in dBFS, updated every 5s (diagnostic) |
+| Ambient Noise Level (Fast) | Sensor | Same value, updated every 1s — for live calibration (diagnostic) |
 | Dynamic TTS Volume | Switch | Enable / disable the feature |
 | Dynamic Volume Min | Number | Volume at quiet threshold (0.0–1.0) |
 | Dynamic Volume Max | Number | Volume at loud threshold (0.0–1.0) |
 | Quiet Threshold (dBFS) | Number | dBFS level that maps to min volume |
 | Loud Threshold (dBFS) | Number | dBFS level that maps to max volume |
+| Volume Curve Exponent | Number | Interpolation curve between the thresholds (1.0 = linear, < 1.0 = steeper ramp-up) |
 
 ## Calibration
 
 Typical starting values (adjustable from HA without re-flashing):
 
-- **Quiet Threshold**: -50 dBFS (silent room → min volume)
-- **Loud Threshold**: -25 dBFS (noisy environment → max volume)
+- **Quiet Threshold**: -55 dBFS (silent room → min volume)
+- **Loud Threshold**: -38 dBFS (open window, daytime traffic → max volume)
 - **Min Volume**: 0.40
 - **Max Volume**: 0.85
+- **Volume Curve Exponent**: 1.0 (linear)
 
-Watch the `Ambient Noise Level` sensor in HA to find the right thresholds for your environment. Talk loudly near the device and note the peak values.
+Watch the `Ambient Noise Level (Fast)` sensor in HA while opening/closing a window to find the right thresholds for your environment. The ESPHome log also prints a full breakdown on every TTS response:
+
+```
+TTS volume → 0.72  (ambient -42.3 dBFS, quiet=-55 loud=-38, ratio=0.48)
+```
 
 ## Development
 
