@@ -11,11 +11,20 @@ Pin the package to a specific ref that matches your ESPHome installation:
 | Package ref | ESPHome version | HA Voice PE ref | Satellite1 ref | Status |
 |---|---|---|---|---|
 | `@esphome-2026.04` | 2026.4.x | `26.4.0` | `v0.2.0` | maintained |
-| `@main` | 2026.5+ / 2026.6+ | `dev` | ⚠️ pending | latest |
+| `@main` | 2026.5.x – 2026.7.x | `dev` | `v0.2.1-beta.0` | latest |
 
 **Note:** The official HA Voice PE firmware also enforces a minimum ESPHome version. Pin both refs together — mismatched versions cause the *"Current ESPHome Version is too old"* error.
 
-> **Satellite1 + ESPHome 2026.5+:** Satellite1 firmware `v0.2.0` pins internal ESPHome components that are incompatible with ESPHome 2026.5+. Use `@esphome-2026.04` until FutureProofHomes releases a new firmware version.
+### Satellite1 v0.2.0 does not build on ESPHome 2026.7
+
+ESPHome 2026.7 removed `std::string GPIOPin::dump_summary()` — deprecated since 2026.1, replaced by `size_t dump_summary(char *, size_t)`. Satellite1 `v0.2.0` still overrides the removed method, so the build stops at `sat_gpio.cpp`:
+
+```
+sat_gpio.h:26:15: error: 'std::string esphome::satellite1::Satellite1GPIOPin::dump_summary() const'
+                         marked 'override', but does not override
+```
+
+FutureProofHomes dropped the method in `v0.2.1-beta.0`. That ref builds on 2026.7 — set it in both places (see [below](#futureproofhomes-satellite1-speaker)); the package ref alone is not enough.
 
 ## Supported devices
 
@@ -43,10 +52,30 @@ packages:
 
 ### FutureProofHomes Satellite1 Speaker
 
-Use the dedicated package (tested against Satellite1 firmware v0.2.0):
+Use the dedicated package (tested against Satellite1 firmware v0.2.1-beta.0):
 
 ```yaml
 packages:
+  dynamic_volume: github://eddyfussel/esphome-adaptive-volume/dynamic-volume-satellite1.yaml@main
+```
+
+The Satellite1 package pins its external components separately. `ext_comp_repo_ref`
+selects the C++ sources that actually get compiled, so it must match `ref` — a
+package ref of `v0.2.1-beta.0` with `ext_comp_repo_ref: v0.2.0` still compiles the
+old sources and fails on 2026.7:
+
+```yaml
+packages:
+  FutureProofHomes.Satellite1:
+    url: https://github.com/futureproofhomes/satellite1-esphome
+    ref: v0.2.1-beta.0
+    refresh: 1s
+    files:
+    - config/satellite1.base.yaml
+    - config/common/dashboard_build.yaml
+    - path: config/common/components.external.yaml
+      vars:
+        ext_comp_repo_ref: v0.2.1-beta.0   # keep in sync with `ref` above
   dynamic_volume: github://eddyfussel/esphome-adaptive-volume/dynamic-volume-satellite1.yaml@main
 ```
 
@@ -139,7 +168,7 @@ task --list
 ```shell
 # The Taskfile handles everything automatically on first run:
 task check:ha-voice-pe    # creates tests/secrets.yaml with dummy values
-task check:satellite1     # clones Satellite1 v0.2.0 repo to .sat1-esphome/
+task check:satellite1     # clones Satellite1 v0.2.1-beta.0 repo to .sat1-esphome/
 ```
 
 For actual device compilation, replace `tests/secrets.yaml` with real credentials.
