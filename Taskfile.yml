@@ -3,7 +3,7 @@ version: '3'
 
 vars:
   # Satellite1 firmware release to use for compile tests
-  SAT1_VERSION: v0.2.0
+  SAT1_VERSION: v0.2.1-beta.0
   # Local cache directory for the Satellite1 repo clone (gitignored)
   SAT1_DIR: .sat1-esphome
 
