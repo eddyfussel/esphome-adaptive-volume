@@ -11,9 +11,15 @@ Pin the package to a specific ref that matches your ESPHome installation:
 | Package ref | ESPHome version | HA Voice PE ref | Satellite1 ref | Status |
 |---|---|---|---|---|
 | `@esphome-2026.04` | 2026.4.x | `26.4.0` | `v0.2.0` | maintained |
-| `@main` | 2026.5.x – 2026.7.x | `dev` | `v0.2.1-beta.0` | latest |
+| `@main` / `@v1.0.2` | 2026.9.x | `dev` | `v0.2.1` | latest |
 
-**Note:** The official HA Voice PE firmware also enforces a minimum ESPHome version. Pin both refs together — mismatched versions cause the *"Current ESPHome Version is too old"* error.
+Both device firmwares enforce a minimum ESPHome version (`esphome: min_version`). Older ESPHome fails with *"Current ESPHome Version is too old"*:
+
+| Firmware ref | Requires ESPHome |
+|---|---|
+| HA Voice PE `dev` | ≥ 2026.9.0 |
+| HA Voice PE `26.9.0` | ≥ 2026.6.0 |
+| Satellite1 `v0.2.1` | ≥ 2026.7.0 |
 
 ### Satellite1 v0.2.0 does not build on ESPHome 2026.7
 
@@ -24,7 +30,24 @@ sat_gpio.h:26:15: error: 'std::string esphome::satellite1::Satellite1GPIOPin::du
                          marked 'override', but does not override
 ```
 
-FutureProofHomes dropped the method in `v0.2.1-beta.0`. That ref builds on 2026.7 — set it in both places (see [below](#futureproofhomes-satellite1-speaker)); the package ref alone is not enough.
+Fixed in Satellite1 `v0.2.1-beta.0` and `v0.2.1`. Update the package ref **and** `ext_comp_repo_ref` (see [below](#futureproofhomes-satellite1-speaker)); the package ref alone is not enough.
+
+### Satellite1 v0.2.1 does not build on ESPHome 2026.9
+
+ESPHome 2026.9 excludes built-in ESP-IDF components that ESPHome itself does not use, including `json` (cJSON) and `esp_http_server`. The Satellite1 radar tuner needs both, so the build stops at `radar_tuner_server.cpp`:
+
+```
+radar_tuner_server.cpp:5:10: fatal error: cJSON.h: No such file or directory
+```
+
+Not fixed upstream yet ([FutureProofHomes/Satellite1-ESPHome#570](https://github.com/FutureProofHomes/Satellite1-ESPHome/issues/570)). `dynamic-volume-satellite1.yaml` re-includes both components, so no action is needed when you use this package from `@v1.0.2` on. Without it, add this to your device YAML:
+
+```yaml
+esp32:
+  framework:
+    advanced:
+      include_builtin_idf_components: [json, esp_http_server]
+```
 
 ## Supported devices
 
@@ -52,7 +75,7 @@ packages:
 
 ### FutureProofHomes Satellite1 Speaker
 
-Use the dedicated package (tested against Satellite1 firmware v0.2.1-beta.0):
+Use the dedicated package (tested against Satellite1 firmware v0.2.1):
 
 ```yaml
 packages:
@@ -61,21 +84,23 @@ packages:
 
 The Satellite1 package pins its external components separately. `ext_comp_repo_ref`
 selects the C++ sources that actually get compiled, so it must match `ref` — a
-package ref of `v0.2.1-beta.0` with `ext_comp_repo_ref: v0.2.0` still compiles the
-old sources and fails on 2026.7:
+package ref of `v0.2.1` with `ext_comp_repo_ref: v0.2.0` still compiles the old
+sources and fails on 2026.7+. The v0.2.1 dashboard template ties both to one YAML
+anchor; keep that pattern when you change the ref:
 
 ```yaml
 packages:
   FutureProofHomes.Satellite1:
-    url: https://github.com/futureproofhomes/satellite1-esphome
-    ref: v0.2.1-beta.0
+    url: &repo_url "https://github.com/futureproofhomes/satellite1-esphome"
+    ref: &repo_ref "v0.2.1"
     refresh: 1s
     files:
-    - config/satellite1.base.yaml
-    - config/common/dashboard_build.yaml
-    - path: config/common/components.external.yaml
-      vars:
-        ext_comp_repo_ref: v0.2.1-beta.0   # keep in sync with `ref` above
+      - config/satellite1.base.yaml
+      - config/common/dashboard_build.yaml
+      - path: config/common/components.external.yaml
+        vars:
+          ext_comp_repo_url: *repo_url
+          ext_comp_repo_ref: *repo_ref
   dynamic_volume: github://eddyfussel/esphome-adaptive-volume/dynamic-volume-satellite1.yaml@main
 ```
 
@@ -168,7 +193,7 @@ task --list
 ```shell
 # The Taskfile handles everything automatically on first run:
 task check:ha-voice-pe    # creates tests/secrets.yaml with dummy values
-task check:satellite1     # clones Satellite1 v0.2.1-beta.0 repo to .sat1-esphome/
+task check:satellite1     # clones Satellite1 v0.2.1 repo to .sat1-esphome/
 ```
 
 For actual device compilation, replace `tests/secrets.yaml` with real credentials.
