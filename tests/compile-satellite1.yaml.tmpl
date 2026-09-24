@@ -94,6 +94,12 @@ logger:
   logs:
     ltr_als_ps: WARN
 
+# Same workaround as dynamic-volume-satellite1.yaml (FutureProofHomes/Satellite1-ESPHome#570)
+esp32:
+  framework:
+    advanced:
+      include_builtin_idf_components: [json, esp_http_server]
+
 # ── External components ───────────────────────────────────────────────────────
 external_components:
   - source:

@@ -14,6 +14,15 @@ external_components:
       ref: main
     components: [dynamic_volume]
 
+# ESPHome 2026.9+ drops built-in ESP-IDF components it does not use itself.
+# Satellite1 (v0.2.1) still needs cJSON and the HTTP server for its radar
+# tuner, so the build fails with "cJSON.h: No such file or directory".
+# Remove once FutureProofHomes/Satellite1-ESPHome#570 is fixed upstream.
+esp32:
+  framework:
+    advanced:
+      include_builtin_idf_components: [json, esp_http_server]
+
 # Core component — audio measurement and volume calculation
 dynamic_volume:
   id: dynamic_vol

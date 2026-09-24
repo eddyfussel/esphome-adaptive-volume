@@ -3,7 +3,7 @@ version: '3'
 
 vars:
   # Satellite1 firmware release to use for compile tests
-  SAT1_VERSION: v0.2.1-beta.0
+  SAT1_VERSION: v0.2.1
   # Local cache directory for the Satellite1 repo clone (gitignored)
   SAT1_DIR: .sat1-esphome
 
@@ -78,12 +78,15 @@ tasks:
     silent: true
     status:
       - test -f tests/secrets.yaml
+      # ESPHome 2026.9+ rejects the all-zeros API key used by older versions of this file
+      - "! grep -q 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' tests/secrets.yaml"
     cmds:
       - |
         cat > tests/secrets.yaml <<'EOF'
         wifi_ssid: "test_network"
         wifi_password: "test_password_12345"
-        api_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        # base64("test-key-for-compile-checks-only") — dummy, never flash this
+        api_key: "dGVzdC1rZXktZm9yLWNvbXBpbGUtY2hlY2tzLW9ubHk="
         EOF
       - echo "Created tests/secrets.yaml with dummy values (gitignored)."
 
