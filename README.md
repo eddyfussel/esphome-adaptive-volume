@@ -11,7 +11,7 @@ Pin the package to a specific ref that matches your ESPHome installation:
 | Package ref | ESPHome version | HA Voice PE ref | Satellite1 ref | Status |
 |---|---|---|---|---|
 | `@esphome-2026.04` | 2026.4.x | `26.4.0` | `v0.2.0` | maintained |
-| `@main` / `@v1.0.2` | 2026.9.x | `dev` | `v0.2.1` | latest |
+| `@main` / `@v1.0.2` | 2026.9.x – 2026.10.x | `dev` | `v0.2.1` | latest |
 
 Both device firmwares enforce a minimum ESPHome version (`esphome: min_version`). Older ESPHome fails with *"Current ESPHome Version is too old"*:
 
@@ -40,7 +40,7 @@ ESPHome 2026.9 excludes built-in ESP-IDF components that ESPHome itself does not
 radar_tuner_server.cpp:5:10: fatal error: cJSON.h: No such file or directory
 ```
 
-Not fixed upstream yet ([FutureProofHomes/Satellite1-ESPHome#570](https://github.com/FutureProofHomes/Satellite1-ESPHome/issues/570)). `dynamic-volume-satellite1.yaml` re-includes both components, so no action is needed when you use this package from `@v1.0.2` on. Without it, add this to your device YAML:
+Fixed upstream on `develop` ([FutureProofHomes/Satellite1-ESPHome#573](https://github.com/FutureProofHomes/Satellite1-ESPHome/pull/573)), but not in a tagged release yet. `dynamic-volume-satellite1.yaml` re-includes both components, so no action is needed when you use this package from `@v1.0.2` on. Without it, add this to your device YAML:
 
 ```yaml
 esp32:

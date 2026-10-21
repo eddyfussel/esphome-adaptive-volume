@@ -17,7 +17,8 @@ external_components:
 # ESPHome 2026.9+ drops built-in ESP-IDF components it does not use itself.
 # Satellite1 (v0.2.1) still needs cJSON and the HTTP server for its radar
 # tuner, so the build fails with "cJSON.h: No such file or directory".
-# Remove once FutureProofHomes/Satellite1-ESPHome#570 is fixed upstream.
+# Fixed upstream on develop (FutureProofHomes/Satellite1-ESPHome#573); remove
+# once a Satellite1 release includes it.
 esp32:
   framework:
     advanced:
