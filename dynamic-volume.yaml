@@ -22,11 +22,12 @@ substitutions:
 # Component source: the components/ folder of this package's own checkout, so
 # the C++ code always matches the package ref (@main, @vX.Y.Z, ...).
 # ESPHome 2026.9+ resolves a local path next to the package file when it does
-# not exist next to the device YAML.
+# not exist next to the device YAML. The path names dynamic_volume so that a
+# components/ folder next to the device YAML does not shadow it.
 external_components:
   - source:
       type: local
-      path: components
+      path: components/dynamic_volume/..
     components: [dynamic_volume]
 
 # Core component — audio measurement and volume calculation
