@@ -11,7 +11,7 @@ Pin the package to a specific ref that matches your ESPHome installation:
 | Package ref | ESPHome version | HA Voice PE ref | Satellite1 ref | Status |
 |---|---|---|---|---|
 | `@esphome-2026.04` | 2026.4.x | `26.4.0` | `v0.2.0` | maintained |
-| `@main` / `@v1.0.3` | 2026.10.x – 2026.11.x | `dev` | `v0.2.1`, `v0.2.2-beta.0` | latest |
+| `@main` / `@v1.0.4` | 2026.10.x – 2026.11.x | `dev` | `v0.2.1`, `v0.2.2-beta.0` | latest |
 
 The package ref pins the C++ component too: the package loads `components/` from its own checkout (needs ESPHome ≥ 2026.9.0). Up to `v1.0.3`, every package ref compiled the component from `main`. A `components/dynamic_volume` folder next to your device YAML takes precedence.
 
