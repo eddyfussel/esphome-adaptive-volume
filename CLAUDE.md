@@ -31,6 +31,8 @@ Device-specific YAMLs (e.g. `hav-pe-wohnzimmer.yaml`) are gitignored — they co
 
 **Why atomics**: The I2S audio callback runs in a FreeRTOS task (priority 23). `smoothed_dbfs_` is written there and read in the main loop. `enabled_` goes the other way. All number/pointer state is only touched from the main loop.
 
+**Why `path: components/dynamic_volume/..` in the packages**: ESPHome 2026.9+ resolves a local `external_components` path next to the device YAML first, then next to the package file (the cloned repo at the package ref). This pins the component to the package ref without a hard-coded `ref:`. Naming `dynamic_volume` in the path keeps an unrelated `components/` folder next to the device YAML from shadowing it. Do not shorten it to `components`.
+
 **Why number entities instead of compile-time constants**: Thresholds and volume limits are exposed as HA number entities so they can be tuned without re-flashing.
 
 ## How to test changes
