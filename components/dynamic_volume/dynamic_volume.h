@@ -4,12 +4,15 @@
 
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
+#include "esphome/core/version.h"
 #include "esphome/components/microphone/microphone.h"
 #include "esphome/components/media_player/media_player.h"
 #include "esphome/components/number/number.h"
 
 #include <atomic>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <vector>
 
@@ -49,7 +52,7 @@ class DynamicVolumeComponent : public Component {
   void set_curve_exponent_number(number::Number *n) { this->curve_exponent_number_ = n; }
 
  protected:
-  void handle_audio_(const std::vector<uint8_t> &data);
+  void handle_audio_(const uint8_t *data, size_t len, const audio::AudioStreamInfo &info);
   VolumeCalc compute_volume_() const;
   void apply_volume_();
 
