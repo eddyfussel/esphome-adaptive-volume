@@ -19,11 +19,14 @@ substitutions:
   dynamic_volume_mic_id: i2s_mics              # HA Voice PE default; use sat1_mics for Satellite1
   dynamic_volume_player_id: external_media_player
 
+# Component source: the components/ folder of this package's own checkout, so
+# the C++ code always matches the package ref (@main, @vX.Y.Z, ...).
+# ESPHome 2026.9+ resolves a local path next to the package file when it does
+# not exist next to the device YAML.
 external_components:
   - source:
-      type: git
-      url: https://github.com/eddyfussel/esphome-adaptive-volume
-      ref: main
+      type: local
+      path: components
     components: [dynamic_volume]
 
 # Core component — audio measurement and volume calculation
@@ -142,6 +145,8 @@ number:
     optimistic: true
 
 esphome:
+  # Needed for the package-relative external_components path above
+  min_version: 2026.9.0
   on_boot:
     # priority -100 runs after all components have setup(), so entity states are available
     priority: -100
