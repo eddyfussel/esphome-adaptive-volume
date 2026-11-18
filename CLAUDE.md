@@ -53,7 +53,8 @@ After flashing, verify in ESPHome logs:
 ## Constraints
 
 - **ESP32 only**: The entire component is wrapped in `#ifdef USE_ESP32`. Do not remove this guard.
-- **Stereo 32-bit I2S**: `handle_audio_()` assumes 8 bytes per frame (2 channels × 4 bytes). Matches the mic setup in HA Voice PE (`i2s_mics`).
+- **Mic format**: `handle_audio_()` reads the format from the stream info (16 or 32 bit, up to 8 channels) and measures the first channel that is not all zeros. Both HA Voice PE (`i2s_mics`) and Satellite1 (`sat1_mics`) deliver 32-bit stereo.
+- **ESPHome version guard**: The mic callback takes `microphone::AudioCapture` on ESPHome ≥ 2026.11 and `std::vector<uint8_t>` before that (`ESPHOME_VERSION_CODE`). Drop the old branch once 2026.10 support ends; the vector callback is removed in 2027.5.0.
 - **No mocks in tests**: ESPHome components cannot be unit-tested in isolation without the full framework — always test via `esphome compile`.
 - **ESPHome version**: Developed against ESPHome 2026.x. The `media_player::MEDIA_PLAYER_STATE_ANNOUNCING` enum value must exist; verify after major ESPHome updates.
 

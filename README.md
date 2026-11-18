@@ -11,15 +11,28 @@ Pin the package to a specific ref that matches your ESPHome installation:
 | Package ref | ESPHome version | HA Voice PE ref | Satellite1 ref | Status |
 |---|---|---|---|---|
 | `@esphome-2026.04` | 2026.4.x | `26.4.0` | `v0.2.0` | maintained |
-| `@main` / `@v1.0.2` | 2026.9.x – 2026.10.x | `dev` | `v0.2.1` | latest |
+| `@main` / `@v1.0.3` | 2026.10.x – 2026.11.x | `dev` | `v0.2.1`, `v0.2.2-beta.0` | latest |
 
 Both device firmwares enforce a minimum ESPHome version (`esphome: min_version`). Older ESPHome fails with *"Current ESPHome Version is too old"*:
 
 | Firmware ref | Requires ESPHome |
 |---|---|
-| HA Voice PE `dev` | ≥ 2026.9.0 |
+| HA Voice PE `dev`, `26.11.0` | ≥ 2026.11.0 ¹ |
 | HA Voice PE `26.9.0` | ≥ 2026.6.0 |
 | Satellite1 `v0.2.1` | ≥ 2026.7.0 |
+| Satellite1 `v0.2.2-beta.0` | ≥ 2026.10.2 |
+
+¹ `min_version` says 2026.9.0, but both refs pull `api`, `micro_wake_word` and `voice_assistant` from an ESPHome 2026.11 commit. On 2026.10 the build fails with `module 'esphome.config_validation' has no attribute 'key_requires'`. Pin `@26.9.0` until you run ESPHome 2026.11.
+
+### ESPHome 2026.11: Satellite1 does not build yet
+
+ESPHome 2026.11 turns the speaker's single `audio_dac_` into a list `audio_dacs_`. Satellite1's own `i2s_audio` speaker (`v0.2.1` and `v0.2.2-beta.0`) still uses the old member:
+
+```
+i2s_audio_speaker.cpp:95:13: error: 'class esphome::i2s_audio::I2SAudioSpeaker' has no member named 'audio_dac_'; did you mean 'audio_dacs_'?
+```
+
+Stay on ESPHome 2026.10.2 for Satellite1 until FutureProofHomes ships a fix. HA Voice PE `dev` needs 2026.11 (see ¹), so mixed setups pin Voice PE to `@26.9.0` in the meantime.
 
 ### Satellite1 v0.2.0 does not build on ESPHome 2026.7
 
@@ -75,7 +88,7 @@ packages:
 
 ### FutureProofHomes Satellite1 Speaker
 
-Use the dedicated package (tested against Satellite1 firmware v0.2.1):
+Use the dedicated package (tested against Satellite1 firmware v0.2.1 and v0.2.2-beta.0):
 
 ```yaml
 packages:
@@ -104,6 +117,14 @@ packages:
   dynamic_volume: github://eddyfussel/esphome-adaptive-volume/dynamic-volume-satellite1.yaml@main
 ```
 
+#### Satellite1 4-mic beta (`v0.2.2-beta.0`)
+
+The beta uses all four microphones with new gain levels and ships XMOS firmware `v1.1.0-beta.1`. To switch:
+
+- Set `ref` to `v0.2.2-beta.0`. With the anchor pattern above, `ext_comp_repo_ref` follows.
+- Remove `xmos_fw_version` from your `substitutions:`. Older dashboard templates set it to `v1.0.3`, which overrides the beta's XMOS firmware.
+- Recalibrate: the new gains shift the measured ambient level, so re-check `Quiet Threshold` and `Loud Threshold` with the `Ambient Noise Level (Fast)` sensor.
+
 Or override the microphone substitution in your device YAML:
 
 ```yaml
@@ -118,7 +139,7 @@ See [example.yaml](example.yaml) and [example-local.yaml](example-local.yaml) fo
 
 ## How it works
 
-The component registers an audio callback on the I2S microphone. While the device is idle (not playing TTS), it continuously measures the ambient noise level as a smoothed dBFS value. The moment the media player transitions to the `ANNOUNCING` state, the component calculates a target volume via linear interpolation between configurable quiet/loud thresholds and applies it before the TTS starts playing.
+The component registers an audio callback on the I2S microphone. While the device is idle (not playing TTS), it continuously measures the ambient noise level as a smoothed dBFS value. While the microphone is muted it keeps the last value instead of measuring silence; if only some channels are muted (Satellite1 v0.2.2+ zeroes channel 0 and keeps channel 1 for wake word), it measures the first live channel. The moment the media player transitions to the `ANNOUNCING` state, the component calculates a target volume via linear interpolation between configurable quiet/loud thresholds and applies it before the TTS starts playing.
 
 ```
 ambient dBFS  │  quiet_db (-55)  ────────────  loud_db (-38)
